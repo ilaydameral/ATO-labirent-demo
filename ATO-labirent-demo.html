@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>ATO – Dijital Labirent (Demo)</title>
+    <style>
+        :root {
+            --bg: #0b1020;
+            --text: rgba(255, 255, 255, 0.92);
+            --muted: rgba(255, 255, 255, 0.7);
+            --card: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.10);
+            --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            --radius: 18px;
+
+            --good: #37d67a;
+            --bad: #ff4d6d;
+            --accent: #7aa7ff;
+
+            /* Labirent renkleri */
+            --mazeBase: #000000;
+            --mazeWall: #1f66ff;
+            --mazeBorder: #6a0dad;
+            /* Mor Çerçeve */
+            --mazePath: #000000;
+            --mazeGrid: rgba(255, 255, 255, 0.06);
+            --checkpoint: #ffd166;
+            --player: #ffffff;
+            --exit: #37d67a;
+            --start: #7aa7ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: radial-gradient(1200px 700px at 20% 20%, rgba(122, 167, 255, 0.18), transparent 60%),
+                radial-gradient(900px 600px at 80% 30%, rgba(55, 214, 122, 0.12), transparent 55%),
+                radial-gradient(900px 600px at 30% 90%, rgba(255, 77, 109, 0.10), transparent 55%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .app {
+            width: min(1100px, 100%);
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        header {
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .title {
+            display: grid;
+            gap: 4px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .title p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.25;
+        }
+
+        .pill {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            background: rgba(122, 167, 255, 0.18);
+            border: 1px solid rgba(122, 167, 255, 0.30);
+            padding: 8px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .content {
+            padding: 14px 18px 18px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .stepText {
+            font-weight: 750;
+            font-size: 15px;
+        }
+
+        .progress {
+            flex: 1;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .progress>div {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(122, 167, 255, 0.85), rgba(55, 214, 122, 0.85));
+            border-radius: 999px;
+            transition: width 260ms ease;
+        }
+
+        .mazeWrap {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: var(--radius);
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .mazeTop {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .sw {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 14px;
+            background: var(--mazeBase);
+            border: 10px solid var(--mazeBorder);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+            touch-action: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 12px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 80ms ease, opacity 120ms ease;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            color: rgba(255, 255, 255, 0.92);
+            width: 100%;
+            max-width: 180px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: rgba(122, 167, 255, 0.14);
+            border-color: rgba(122, 167, 255, 0.25);
+        }
+
+        button.danger {
+            background: rgba(255, 77, 109, 0.12);
+            border-color: rgba(255, 77, 109, 0.25);
+        }
+
+        .feedback {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.06);
+            font-size: 14px;
+            line-height: 1.3;
+            color: rgba(255, 255, 255, 0.86);
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .tag {
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.82);
+            white-space: nowrap;
+        }
+
+        /* Modal (Zarf/Soru) */
+        .modalOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 20;
+        }
+
+        .modalOverlay.active {
+            display: flex;
+        }
+
+        .modal {
+            width: min(720px, 100%);
+            background: rgba(15, 20, 35, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+            overflow: hidden;
+        }
+
+        .modalHead {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .modalHead .h {
+            display: grid;
+            gap: 4px;
+        }
+
+        .modalHead .h b {
+            font-size: 16px;
+        }
+
+        .modalHead .h span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .modalBody {
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .qText {
+            font-size: 18px;
+            line-height: 1.35;
+            font-weight: 850;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .btnRow {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .btnGood {
+            background: rgba(55, 214, 122, 0.18);
+            border: 1px solid rgba(55, 214, 122, 0.38);
+        }
+
+        .btnBad {
+            background: rgba(255, 77, 109, 0.16);
+            border: 1px solid rgba(255, 77, 109, 0.36);
+        }
+
+        /* Right panel */
+        .right {
+            padding: 16px 18px 18px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: var(--radius);
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .nodes {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .node {
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 850;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .node.done {
+            background: rgba(55, 214, 122, 0.14);
+            border-color: rgba(55, 214, 122, 0.30);
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .node.current {
+            outline: 2px solid rgba(122, 167, 255, 0.70);
+            background: rgba(122, 167, 255, 0.16);
+            border-color: rgba(122, 167, 255, 0.28);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.70);
+            line-height: 1.35;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- LEFT -->
+        <section class="panel">
+            <header>
+                <div class="title">
+                    <h1>ATO – Dijital Labirent (Demo)</h1>
+                    <p>Taşı labirentte ilerlet, zarf noktalarında soruları cevapla. Yanlışta çıkmaza girip geri dön.</p>
+                </div>
+                <div class="pill" id="modePill">Hazır</div>
+            </header>
+
+            <div class="content">
+                <div class="row">
+                    <div class="stepText" id="stepText">Zarf 1 / 10</div>
+                    <div class="progress">
+                        <div id="progressBar"></div>
+                    </div>
+                </div>
+
+                <div class="mazeWrap">
+                    <div class="mazeTop">
+                        <div class="legend">
+                            <span class="dot"><span class="sw" style="background:var(--player)"></span>Taş</span>
+                            <span class="dot"><span class="sw" style="background:var(--checkpoint)"></span>Zarf</span>
+                            <span class="dot"><span class="sw" style="background:var(--start)"></span>Giriş</span>
+                            <span class="dot"><span class="sw" style="background:var(--exit)"></span>Çıkış</span>
+                        </div>
+                        <button class="secondary" onclick="resetGame()">🔁 Baştan</button>
+                    </div>
+
+                    <canvas id="maze" width="600" height="900"></canvas>
+
+                    <!-- Touch controls -->
+                    <div class="controls">
+                        <div></div>
+                        <button onclick="move(0,-1)">⬆️</button>
+                        <div></div>
+                        <button onclick="move(-1,0)">⬅️</button>
+                        <button onclick="move(0,1)">⬇️</button>
+                        <button onclick="move(1,0)">➡️</button>
+                    </div>
+                </div>
+
+                <div class="feedback" id="feedbackBox">
+                    <span id="feedbackText">Ok tuşlarıyla veya butonlarla taşı hareket ettir. Zarf noktasına gelince
+                        soru açılır.</span>
+                    <span class="tag" id="feedbackTag">ATO</span>
+                </div>
+
+                <div class="mono">
+                    Kısayollar: <b>↑ ↓ ← →</b> hareket • <b>R</b> reset
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT -->
+        <aside class="panel">
+            <div class="right">
+                <div class="box">
+                    <b>Zarf İlerlemesi</b>
+                    <div class="nodes" id="nodes"></div>
+                    <div class="hint">
+                        Sıradaki zarf: <b id="nextLabel">1</b>. Sadece sıradaki zarf aktif.
+                    </div>
+                </div>
+
+                <div class="box">
+                    <b>Oyun Kuralları (Rapor 2.6)</b>
+                    <div class="hint" style="display:grid; gap:8px;">
+                        <span>1. Her yol ayrımında yönlendirici zarflar bulunur.</span>
+                        <span>2. Doğru cevabın altındaki ok yönüne (açılan yola) hareket edilir.</span>
+                        <span>3. Yanlış cevapta çıkmaz sokağa girilir; geri dönüp soruya tekrar bakılmalıdır.</span>
+                        <span>4. Duvarların üstünden geçilemez.</span>
+                    </div>
+                    <div class="mono">
+                        Labirent şekli <b>MAZE</b> dizisinden değiştirilebilir. Zarf noktaları <b>CHECKPOINTS</b> ile
+                        ayarlanır.
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- QUESTION MODAL -->
+    <div class="modalOverlay" id="modal">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modalHead">
+                <div class="h">
+                    <b id="modalTitle">Zarf 1</b>
+                    <span>Doğru/yanlış cevap ver. Yanlışta çıkmaza gidip geri dönersin.</span>
+                </div>
+                <div class="pill" id="modalPill">Soru</div>
+            </div>
+            <div class="modalBody">
+                <div class="qText" id="qText">…</div>
+                <div class="hint" id="qHint">Cevabını seç.</div>
+                <div class="btnRow">
+                    <button class="btnGood" onclick="answer(true)">✅ DOĞRU</button>
+                    <button class="btnBad" onclick="answer(false)">❌ YANLIŞ</button>
+                </div>
+                <button class="danger" onclick="closeModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================
+        // 1) SORULARI GÜNCELLEDİK (ATO Raporuna Uygun)
+        // =========================
+        const QUESTIONS = [
+            { text: "Deprem anında 'Çök-Kapan-Tutun' hareketi yapılmalıdır.", correct: true },
+            { text: "Sel sularının derinliği bilinmediği için içine girmek tehlikelidir.", correct: true },
+            { text: "Çığ tehlikesi olan yerlerde yüksek ses çıkarmak güvenlidir.", correct: false },
+            { text: "Dik yamaçlarda ağaçlandırma yapmak heyelan riskini azaltır.", correct: true },
+            { text: "Türkiye'de tüm acil durumlar için aranması gereken numara 112'dir.", correct: true },
+            { text: "Deniz kıyısında şiddetli deprem olursa tsunami riskine karşı kıyıda beklenmelidir.", correct: false },
+            { text: "Yangın anında duman yükseldiği için emekleyerek ilerlemek gerekir.", correct: true },
+            { text: "Erozyon deprem gibi aniden gerçekleşen hızlı bir doğal afettir.", correct: false },
+            { text: "Her evde bir afet ve acil durum çantası hazır bulunmalıdır.", correct: true },
+            { text: "Afetlere karşı bilinçli olmak can ve mal kaybını azaltır.", correct: true },
+        ];
+
+        // =========================
+        // 2) LABİRENT HARİTASI (Fiziksel Modele Benzer)
+        // 21 sütun x 31 satır (Yaklaşık)
+        // 1=Duvar, 0=Yol
+        // =========================
+        const MAZE_STR = [
+            "111111111111111111111", // 0 
+            "100000000001000000001", // 1 (Exit at 18,1)
+            "101111111101011111101", // 2
+            "101000000000010000001", // 3 (CP 10 around here)
+            "101011111111110111111", // 4
+            "101010000000000000001", // 5
+            "101010111111111111101", // 6 (CP 9)
+            "101010000010000000001", // 7
+            "101011111010111111101", // 8
+            "101000001010000000001", // 9 (CP 8)
+            "101111101011111111101", // 10
+            "100000001000000000001", // 11
+            "101111111111111111101", // 12
+            "100000000000000000001", // 13 (CP 5? 6?)
+            "111111111111110111111", // 14
+            "100000000000010000001", // 15
+            "101111111011010111101", // 16
+            "101000001010010100001", // 17 (CP 4)
+            "101011101110110101111", // 18
+            "101010000000100101001", // 19
+            "101010111111101101011", // 20
+            "101010000000000000001", // 21 (CP 3)
+            "101011111111111111101", // 22
+            "101000000000000000001", // 23
+            "101111111101111111101", // 24
+            "100000000101000000001", // 25 (CP 1, 2)
+            "111111110101011111101", // 26
+            "100000010101010000001", // 27
+            "101111010101010111101", // 28
+            "100000000100000100001", // 29 (Start area)
+            "111111111101111111111", // 30 (Entrance at 10)
+        ];
+
+        const MAZE = MAZE_STR.map(r => r.split('').map(c => parseInt(c)));
+
+        // Giriş / Çıkış
+        const START = { x: 10, y: 29 };
+        const EXIT = { x: 18, y: 1 };
+
+        // =========================
+        // 3) ZARF NOKTALARI (10 adet)
+        // İdeal rotaya göre sıralı yerleşim
+        // =========================
+        const CHECKPOINTS = [
+            { id: 1, x: 14, y: 29 }, // Giriş sağı
+            { id: 2, x: 5, y: 27 },  // Sol köşe
+            { id: 3, x: 13, y: 25 }, // Orta sağ
+            { id: 4, x: 5, y: 23 },  // Sol yukarısı
+            { id: 5, x: 17, y: 21 }, // Sağ kenar
+            { id: 6, x: 9, y: 17 },  // Orta
+            { id: 7, x: 3, y: 13 },  // Sol üst
+            { id: 8, x: 13, y: 9 },  // Orta üst
+            { id: 9, x: 5, y: 5 },   // Sol en üst
+            { id: 10, x: 12, y: 3 }, // Çıkışa yakın
+        ];
+
+        // =========================
+        // GAME STATE
+        // =========================
+        let expectedCheckpoint = 1;   // sıradaki zarf
+        let solved = new Set();       // doğru cevaplanan zarflar
+        let player = { x: START.x, y: START.y };
+        let lastSafe = { x: START.x, y: START.y }; // yanlışta buraya döndür
+        let modalOpen = false;
+
+        // Canvas setup
+        const canvas = document.getElementById("maze");
+        const ctx = canvas.getContext("2d");
+
+        // UI refs
+        const modalEl = document.getElementById("modal");
+        const qTextEl = document.getElementById("qText");
+        const modalTitleEl = document.getElementById("modalTitle");
+        const modePillEl = document.getElementById("modePill");
+        const modalPillEl = document.getElementById("modalPill");
+
+        const feedbackTextEl = document.getElementById("feedbackText");
+        const feedbackTagEl = document.getElementById("feedbackTag");
+
+        const nodesEl = document.getElementById("nodes");
+        const stepTextEl = document.getElementById("stepText");
+        const progressBarEl = document.getElementById("progressBar");
+        const nextLabelEl = document.getElementById("nextLabel");
+
+        // Grid sizing
+        const rows = MAZE.length;
+        const cols = MAZE[0].length;
+        const cell = Math.floor(Math.min(canvas.width / cols, canvas.height / rows));
+        const offsetX = Math.floor((canvas.width - cols * cell) / 2);
+        const offsetY = Math.floor((canvas.height - rows * cell) / 2);
+
+        // Helpers
+        function setFeedback(msg, tag = "ATO") {
+            feedbackTextEl.textContent = msg;
+            feedbackTagEl.textContent = tag;
+        }
+
+        function inBounds(x, y) {
+            return y >= 0 && y < rows && x >= 0 && x < cols;
+        }
+
+        function isWall(x, y) {
+            if (!inBounds(x, y)) return true;
+            return MAZE[y][x] === 1;
+        }
+
+        function isCheckpointCell(x, y) {
+            return CHECKPOINTS.find(c => c.x === x && c.y === y);
+        }
+
+        function draw() {
+            // base
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // background grid faint
+            ctx.fillStyle = getCSS("--mazeBase");
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw walls
+            ctx.fillStyle = getCSS("--mazeWall");
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    if (MAZE[y][x] === 1) {
+                        ctx.fillRect(offsetX + x * cell, offsetY + y * cell, cell, cell);
+                    }
+                }
+            }
+
+            // start / exit tiles
+            drawTile(START.x, START.y, getCSS("--start"));
+            drawTile(EXIT.x, EXIT.y, getCSS("--exit"));
+
+            // checkpoints
+            for (const cp of CHECKPOINTS) {
+                const isSolved = solved.has(cp.id);
+                const isNext = (cp.id === expectedCheckpoint);
+                // solved -> green tint, next -> yellow, locked -> dim
+                let color = getCSS("--checkpoint");
+                if (isSolved) color = "rgba(55,214,122,0.85)";
+                else if (!isNext) color = "rgba(255,209,102,0.35)";
+                drawTile(cp.x, cp.y, color);
+
+                // number
+                ctx.fillStyle = "rgba(0,0,0,0.75)";
+                ctx.font = `${Math.max(12, Math.floor(cell * 0.45))}px system-ui`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(String(cp.id), offsetX + cp.x * cell + cell / 2, offsetY + cp.y * cell + cell / 2);
+            }
+
+            // player
+            const px = offsetX + player.x * cell + cell / 2;
+            const py = offsetY + player.y * cell + cell / 2;
+            ctx.beginPath();
+            ctx.fillStyle = getCSS("--player");
+            ctx.arc(px, py, Math.max(6, Math.floor(cell * 0.28)), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,0.35)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // optional: show lastSafe
+            // drawTile(lastSafe.x, lastSafe.y, "rgba(122,167,255,0.10)");
+        }
+
+        function drawTile(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(offsetX + x * cell, offsetY + y * cell, cell, cell);
+        }
+
+        function getCSS(varName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        }
+
+        function updateProgressUI() {
+            const total = QUESTIONS.length;
+            stepTextEl.textContent = `Zarf ${Math.min(expectedCheckpoint, total)} / ${total}`;
+            nextLabelEl.textContent = String(expectedCheckpoint);
+            const pct = Math.round(((expectedCheckpoint - 1) / total) * 100);
+            progressBarEl.style.width = pct + "%";
+            modePillEl.textContent = modalOpen ? "Zarf Açıldı" : "Labirent";
+            renderNodes();
+        }
+
+        function renderNodes() {
+            nodesEl.innerHTML = "";
+            for (let i = 1; i <= QUESTIONS.length; i++) {
+                const div = document.createElement("div");
+                div.className = "node";
+                div.textContent = i;
+                if (solved.has(i)) div.classList.add("done");
+                if (i === expectedCheckpoint) div.classList.add("current");
+                nodesEl.appendChild(div);
+            }
+        }
+
+        // Movement
+        function move(dx, dy) {
+            if (modalOpen) return;
+
+            const nx = player.x + dx;
+            const ny = player.y + dy;
+            if (isWall(nx, ny)) {
+                setFeedback("⛔ Duvar var. Duvarların üstünden geçemezsin.", "KURAL");
+                return;
+            }
+            player.x = nx;
+            player.y = ny;
+
+            // reached exit?
+            if (player.x === EXIT.x && player.y === EXIT.y) {
+                if (solved.size === QUESTIONS.length) {
+                    setFeedback("🎉 Çıkışa ulaştın ve tüm zarfları doğru yaptın!", "ÇIKIŞ");
+                } else {
+                    setFeedback("🚪 Çıkış burada ama önce tüm zarfları çözmelisin.", "ÇIKIŞ");
+                }
+            } else {
+                setFeedback("Taşı ilerlet. Sıradaki zarfı bul.", "ATO");
+            }
+
+            // checkpoint trigger
+            const cp = isCheckpointCell(player.x, player.y);
+            if (cp && cp.id === expectedCheckpoint) {
+                openQuestion(cp.id);
+            }
+
+            draw();
+        }
+
+        // Modal question logic
+        function openQuestion(id) {
+            modalOpen = true;
+            modalEl.classList.add("active");
+            modalTitleEl.textContent = `Zarf ${id}`;
+            qTextEl.textContent = QUESTIONS[id - 1]?.text ?? "(Soru yok)";
+            modalPillEl.textContent = "Soru";
+            updateProgressUI();
+            setFeedback(`📩 Zarf ${id} açıldı. Soruyu cevapla.`, "ZARF");
+        }
+
+        function closeModal() {
+            modalOpen = false;
+            modalEl.classList.remove("active");
+            updateProgressUI();
+            draw();
+        }
+
+        function answer(userAnswer) {
+            if (!modalOpen) return;
+
+            const id = expectedCheckpoint;
+            const q = QUESTIONS[id - 1];
+            const correct = q.correct;
+
+            if (userAnswer === correct) {
+                solved.add(id);
+                lastSafe = { x: player.x, y: player.y }; // artık bu checkpoint güvenli
+                expectedCheckpoint++;
+
+                modalPillEl.textContent = "Doğru!";
+                setFeedback("✅ Doğru! Ok yönünde (açılan yolda) ilerle.", "İLERLE");
+
+                // If finished all
+                if (expectedCheckpoint > QUESTIONS.length) {
+                    setFeedback("🎉 Çıkışa ulaştın!", "BİTİŞ");
+                    expectedCheckpoint = QUESTIONS.length + 1;
+                }
+
+                // close modal after short delay
+                setTimeout(() => {
+                    closeModal();
+                    updateProgressUI();
+                    draw();
+                }, 450);
+            } else {
+                modalPillEl.textContent = "Yanlış!";
+                setFeedback("❌ Yanlış cevap! Çıkmaz sokağa girdin. Geri dön ve tekrar dene.", "ÇIKMAZ");
+
+                // teleport back to last safe
+                setTimeout(() => {
+                    player.x = lastSafe.x;
+                    player.y = lastSafe.y;
+                    closeModal();
+                    updateProgressUI();
+                    draw();
+                }, 1500); // give more time to read 'Wrong'
+            }
+        }
+
+        function resetGame() {
+            expectedCheckpoint = 1;
+            solved = new Set();
+            player = { x: START.x, y: START.y };
+            lastSafe = { x: START.x, y: START.y };
+            modalOpen = false;
+            modalEl.classList.remove("active");
+            setFeedback("Başladık. Taşı labirentte ilerlet, Zarf 1'i bul.", "ATO");
+            updateProgressUI();
+            draw();
+        }
+
+        // Keyboard
+        window.addEventListener("keydown", (e) => {
+            const k = e.key.toLowerCase();
+            if (k === "r") resetGame();
+            if (k === "arrowup") move(0, -1);
+            if (k === "arrowdown") move(0, 1);
+            if (k === "arrowleft") move(-1, 0);
+            if (k === "arrowright") move(1, 0);
+        });
+
+        // init
+        resetGame();
+    </script>
+</body>
+
+</html>
