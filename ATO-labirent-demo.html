@@ -639,16 +639,30 @@
             return CHECKPOINTS.find(c => c.x === x && c.y === y);
         }
 
+        // RENKLER (Mobil uyumluluk için JS içine sabitlendi)
+        const COLORS = {
+            bg: "#0b1020",
+            mazeBase: "#000000",
+            mazeWall: "#1f66ff",
+            mazePath: "#000000",
+            checkpoint: "#ffd166",
+            player: "#ffffff",
+            exit: "#37d67a",
+            start: "#7aa7ff",
+            solved: "rgba(55,214,122,0.85)",
+            locked: "rgba(255,209,102,0.35)"
+        };
+
         function draw() {
             // base
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // background grid faint
-            ctx.fillStyle = getCSS("--mazeBase");
+            // background
+            ctx.fillStyle = COLORS.mazeBase;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // draw walls
-            ctx.fillStyle = getCSS("--mazeWall");
+            ctx.fillStyle = COLORS.mazeWall;
             for (let y = 0; y < rows; y++) {
                 for (let x = 0; x < cols; x++) {
                     if (MAZE[y][x] === 1) {
@@ -658,17 +672,17 @@
             }
 
             // start / exit tiles
-            drawTile(START.x, START.y, getCSS("--start"));
-            drawTile(EXIT.x, EXIT.y, getCSS("--exit"));
+            drawTile(START.x, START.y, COLORS.start);
+            drawTile(EXIT.x, EXIT.y, COLORS.exit);
 
             // checkpoints
             for (const cp of CHECKPOINTS) {
                 const isSolved = solved.has(cp.id);
                 const isNext = (cp.id === expectedCheckpoint);
                 // solved -> green tint, next -> yellow, locked -> dim
-                let color = getCSS("--checkpoint");
-                if (isSolved) color = "rgba(55,214,122,0.85)";
-                else if (!isNext) color = "rgba(255,209,102,0.35)";
+                let color = COLORS.checkpoint;
+                if (isSolved) color = COLORS.solved;
+                else if (!isNext) color = COLORS.locked;
                 drawTile(cp.x, cp.y, color);
 
                 // number
@@ -683,24 +697,17 @@
             const px = offsetX + player.x * cell + cell / 2;
             const py = offsetY + player.y * cell + cell / 2;
             ctx.beginPath();
-            ctx.fillStyle = getCSS("--player");
+            ctx.fillStyle = COLORS.player;
             ctx.arc(px, py, Math.max(6, Math.floor(cell * 0.28)), 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = "rgba(0,0,0,0.35)";
             ctx.lineWidth = 2;
             ctx.stroke();
-
-            // optional: show lastSafe
-            // drawTile(lastSafe.x, lastSafe.y, "rgba(122,167,255,0.10)");
         }
 
         function drawTile(x, y, color) {
             ctx.fillStyle = color;
             ctx.fillRect(offsetX + x * cell, offsetY + y * cell, cell, cell);
-        }
-
-        function getCSS(varName) {
-            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
         }
 
         function updateProgressUI() {
@@ -840,8 +847,25 @@
             if (k === "arrowright") move(1, 0);
         });
 
-        // init
-        resetGame();
+        // init (eski window.onload kısmını kaldır, bunu koy)
+        document.addEventListener("DOMContentLoaded", () => {
+            try {
+                resetGame();
+                setFeedback("✅ JS çalışıyor. Zarf 1'i bul.", "OK");
+            } catch (e) {
+                console.error(e);
+                // ekranda görünsün diye:
+                feedbackTextEl.textContent = "❌ JS error: " + (e?.message || e);
+                feedbackTagEl.textContent = "ERROR";
+            }
+        });
+
+        // IMPORTANT: iOS/Safari için fonksiyonları global'e bağla
+        window.move = move;
+        window.resetGame = resetGame;
+        window.answer = answer;
+        window.closeModal = closeModal;
+
     </script>
 </body>
 
