@@ -688,19 +688,21 @@
 
     <script>
         // =========================
-        // 1) SORULARI GÜNCELLEDİK (ATO Raporuna Uygun)
+        // SORULAR (ATO Labirent Oyun İçi Soruları.pdf) + CEVAP ANAHTARI
+        // Cevaplar: 1Y,2Y,3D,4Y,5D,6Y,7D,8D,9D,10Y
+        // correct: DOĞRU ise true, YANLIŞ ise false
         // =========================
         const QUESTIONS = [
-            { text: "Deprem anında 'Çök-Kapan-Tutun' hareketi yapılmalıdır.", correct: true },
-            { text: "Sel sularının derinliği bilinmediği için içine girmek tehlikelidir.", correct: true },
-            { text: "Çığ tehlikesi olan yerlerde yüksek ses çıkarmak güvenlidir.", correct: false },
-            { text: "Dik yamaçlarda ağaçlandırma yapmak heyelan riskini azaltır.", correct: true },
-            { text: "Türkiye'de tüm acil durumlar için aranması gereken numara 112'dir.", correct: true },
-            { text: "Deniz kıyısında şiddetli deprem olursa tsunami riskine karşı kıyıda beklenmelidir.", correct: false },
-            { text: "Yangın anında duman yükseldiği için emekleyerek ilerlemek gerekir.", correct: true },
-            { text: "Erozyon deprem gibi aniden gerçekleşen hızlı bir doğal afettir.", correct: false },
-            { text: "Her evde bir afet ve acil durum çantası hazır bulunmalıdır.", correct: true },
-            { text: "Afetlere karşı bilinçli olmak can ve mal kaybını azaltır.", correct: true },
+            { text: "Türkiye'de çığ felaketinin en fazla yaşandığı bölge Akdeniz Bölgesidir.", correct: false }, // 1 Yanlış
+            { text: "Karadeniz Bölgesi'nde en yaygın görülen afet türü kuraklıktır.", correct: false },          // 2 Yanlış
+            { text: "Ege ve Akdeniz kıyılarında orman yangınları daha yaygın görülür.", correct: true },        // 3 Doğru
+            { text: "Deprem çantasında okuma kitabı bulunmalıdır.", correct: false },                           // 4 Yanlış
+            { text: "Türkiye'de en fazla çığ felaketi gören bölgemiz Doğu Anadolu Bölgesidir.", correct: true },// 5 Doğru
+            { text: "Türkiye'de orman yangınlarının yaşanmasında en sık görülen neden yoğun nüfuslu bölgelerin olmasıdır.", correct: false }, // 6 Yanlış
+            { text: "Kuraklığın oluşumunda şiddetli buharlaşma ve yağış miktarında düşüş etkili olmuştur.", correct: true }, // 7 Doğru
+            { text: "Marmara Bölgesi'nde en riskli afet türü depremdir.", correct: true },                      // 8 Doğru
+            { text: "Küresel ısınma kuraklıkların artmasına neden olur.", correct: true },                       // 9 Doğru
+            { text: "Hortum, Türkiye'de yaşanmaz.", correct: false },                                           // 10 Yanlış
         ];
 
         // =========================
