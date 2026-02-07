@@ -430,6 +430,7 @@
             font-size: 32px;
             font-weight: 800;
             background: linear-gradient(135deg, #fff 0%, #7aa7ff 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 16px;
@@ -456,6 +457,89 @@
             transform: translateY(-2px);
             box-shadow: 0 14px 28px rgba(122, 167, 255, 0.4);
         }
+
+        /* NEW: Input & Timer Styles */
+        .nameInput {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 18px;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 240px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .nameInput:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .timerDisplay {
+            font-family: ui-monospace, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent);
+            background: rgba(122, 167, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(122, 167, 255, 0.2);
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .leaderboard {
+            margin-top: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: left;
+        }
+
+        .leaderboard h3 {
+            margin-bottom: 12px;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 15px;
+        }
+
+        .lb-row:last-child {
+            border-bottom: none;
+        }
+
+        .lb-rank {
+            color: var(--muted);
+            width: 24px;
+        }
+
+        .lb-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .lb-time {
+            font-family: monospace;
+        }
+
+        .current-score {
+            font-size: 24px;
+            margin: 10px 0 24px;
+            font-weight: bold;
+            color: #4cd964;
+        }
     </style>
 </head>
 
@@ -467,6 +551,7 @@
             Afet bilincini artırmak için hazırlanmış bu simülasyonda;
             doğru kararlar vererek hedefe ulaşmalısın.
         </p>
+        <input type="text" id="playerName" class="nameInput" placeholder="Adınız Soyadınız" maxlength="20">
         <button class="bigBtn" onclick="startGame()">OYUNA BAŞLA</button>
     </div>
 
@@ -482,6 +567,7 @@
                         </p>
                     </div>
                     <div class="pill" id="modePill">Hazır</div>
+                    <div class="timerDisplay" id="timerDisplay">00:00</div>
                 </header>
 
                 <div class="content">
@@ -565,9 +651,17 @@
         <p class="heroText">
             Labirenti başarıyla tamamladın ve tüm afet sorularını doğru cevapladın.
             <br><br>
-            <i>"Afetlere karşı bilinçli olmak hayat kurtarır."</i>
+        <div class="current-score" id="finalScore">Süren: 00:00</div>
+        <i>"Afetlere karşı bilinçli olmak hayat kurtarır."</i>
         </p>
         <button class="bigBtn" onclick="resetGameApp()">TEKRAR OYNA</button>
+
+        <div class="leaderboard">
+            <h3>🏆 Liderlik Tablosu (Bu Cihaz)</h3>
+            <div id="lbList">
+                <!-- JS will populate -->
+            </div>
+        </div>
     </div>
 
     <!-- QUESTION MODAL -->
@@ -888,7 +982,7 @@
                 if (expectedCheckpoint > QUESTIONS.length) {
                     // setFeedback("🎉 Çıkışa ulaştın!", "BİTİŞ");
                     // expectedCheckpoint = QUESTIONS.length + 1;
-                    showScreen("endScreen");
+                    endGameSuccess();
                 }
 
                 // close modal after short delay
@@ -935,13 +1029,102 @@
         });
 
         // init - Start screen is active by default in HTML
+
+        // TIMER & STATE
+        let startTime = 0;
+        let timerInterval = null;
+        let currentPlayerName = "Misafir";
+
         function startGame() {
+            const input = document.getElementById("playerName");
+            let name = input.value.trim();
+            if (!name) {
+                alert("Lütfen bir isim giriniz!");
+                return;
+            }
+            currentPlayerName = name;
             showScreen("gameScreen");
             resetGame();
+
+            // Start Timer
+            startTime = Date.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const diff = Math.floor((now - startTime) / 1000);
+            const m = Math.floor(diff / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            document.getElementById("timerDisplay").textContent = `${m}:${s}`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            return document.getElementById("timerDisplay").textContent;
+        }
+
+        function endGameSuccess() {
+            const finalTimeStr = stopTimer();
+            saveScore(currentPlayerName, finalTimeStr);
+
+            document.getElementById("finalScore").textContent = `Süren: ${finalTimeStr}`;
+            renderLeaderboard();
+            showScreen("endScreen");
+        }
+
+        // Leaderboard (LocalStorage)
+        const LB_KEY = "ATO_LABIRENT_LB";
+
+        function saveScore(name, timeStr) {
+            // timeStr "MM:SS" -> seconds for sorting
+            const [m, s] = timeStr.split(':').map(Number);
+            const totalSeconds = m * 60 + s;
+
+            let lb = JSON.parse(localStorage.getItem(LB_KEY) || "[]");
+            lb.push({ name, timeStr, seconds: totalSeconds, date: new Date().toLocaleDateString() });
+
+            // Sort by seconds (ascending)
+            lb.sort((a, b) => a.seconds - b.seconds);
+
+            // Keep top 10
+            lb = lb.slice(0, 10);
+
+            localStorage.setItem(LB_KEY, JSON.stringify(lb));
+        }
+
+        function renderLeaderboard() {
+            const listEl = document.getElementById("lbList");
+            listEl.innerHTML = "";
+
+            let lb = JSON.parse(localStorage.getItem(LB_KEY) || "[]");
+            if (lb.length === 0) {
+                listEl.innerHTML = "<div class='mono' style='text-align:center'>Henüz kayıt yok.</div>";
+                return;
+            }
+
+            lb.forEach((item, index) => {
+                const row = document.createElement("div");
+                row.className = "lb-row";
+                row.innerHTML = `
+                    <div class="lb-rank">#${index + 1}</div>
+                    <div class="lb-name">${escapeHtml(item.name)}</div>
+                    <div class="lb-time">${item.timeStr}</div>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function resetGameApp() {
             showScreen("startScreen");
+            document.getElementById("playerName").value = ""; // clear input
         }
 
         function showScreen(id) {
