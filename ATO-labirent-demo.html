@@ -397,177 +397,91 @@
             color: rgba(255, 255, 255, 0.70);
             line-height: 1.35;
         }
-
-        /* SCREENS */
-        .screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .heroTitle {
-            font-size: 32px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #fff 0%, #7aa7ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-        }
-
-        .heroText {
-            font-size: 16px;
-            color: var(--muted);
-            max-width: 480px;
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-
-        .bigBtn {
-            font-size: 18px;
-            padding: 16px 32px;
-            background: var(--accent);
-            color: #0b1020;
-            border: none;
-            box-shadow: 0 10px 20px rgba(122, 167, 255, 0.3);
-        }
-
-        .bigBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 28px rgba(122, 167, 255, 0.4);
-        }
     </style>
 </head>
 
 <body>
-    <!-- 1) START SCREEN -->
-    <div id="startScreen" class="screen active">
-        <h1 class="heroTitle">ATO – Dijital Labirent</h1>
-        <p class="heroText">
-            Afet bilincini artırmak için hazırlanmış bu simülasyonda;
-            doğru kararlar vererek hedefe ulaşmalısın.
-        </p>
-        <button class="bigBtn" onclick="startGame()">OYUNA BAŞLA</button>
-    </div>
+    <div class="app">
+        <!-- LEFT -->
+        <section class="panel">
+            <header>
+                <div class="title">
+                    <h1>ATO – Dijital Labirent (Demo)</h1>
+                    <p>Taşı labirentte ilerlet, zarf noktalarında soruları cevapla. Yanlışta çıkmaza girip geri dön.</p>
+                </div>
+                <div class="pill" id="modePill">Hazır</div>
+            </header>
 
-    <!-- 2) GAME SCREEN (Mevcut Oyun) -->
-    <div id="gameScreen" class="screen">
-        <div class="app">
-            <!-- LEFT -->
-            <section class="panel">
-                <header>
-                    <div class="title">
-                        <h1>ATO – Dijital Labirent (Demo)</h1>
-                        <p>Taşı labirentte ilerlet, zarf noktalarında soruları cevapla. Yanlışta çıkmaza girip geri dön.
-                        </p>
+            <div class="content">
+                <div class="row">
+                    <div class="stepText" id="stepText">Zarf 1 / 10</div>
+                    <div class="progress">
+                        <div id="progressBar"></div>
                     </div>
-                    <div class="pill" id="modePill">Hazır</div>
-                </header>
+                </div>
 
-                <div class="content">
-                    <div class="row">
-                        <div class="stepText" id="stepText">Zarf 1 / 10</div>
-                        <div class="progress">
-                            <div id="progressBar"></div>
+                <div class="mazeWrap">
+                    <div class="mazeTop">
+                        <div class="legend">
+                            <span class="dot"><span class="sw" style="background:var(--player)"></span>Taş</span>
+                            <span class="dot"><span class="sw" style="background:var(--checkpoint)"></span>Zarf</span>
+                            <span class="dot"><span class="sw" style="background:var(--start)"></span>Giriş</span>
+                            <span class="dot"><span class="sw" style="background:var(--exit)"></span>Çıkış</span>
                         </div>
+                        <button class="secondary" onclick="resetGame()">🔁 Baştan</button>
                     </div>
 
-                    <div class="mazeWrap">
-                        <div class="mazeTop">
-                            <div class="legend">
-                                <span class="dot"><span class="sw" style="background:var(--player)"></span>Taş</span>
-                                <span class="dot"><span class="sw"
-                                        style="background:var(--checkpoint)"></span>Zarf</span>
-                                <span class="dot"><span class="sw" style="background:var(--start)"></span>Giriş</span>
-                                <span class="dot"><span class="sw" style="background:var(--exit)"></span>Çıkış</span>
-                            </div>
-                            <button class="secondary" onclick="resetGame()">🔁 Baştan</button>
-                        </div>
+                    <canvas id="maze" width="600" height="900"></canvas>
 
-                        <canvas id="maze" width="600" height="900"></canvas>
-
-                        <!-- Touch controls -->
-                        <div class="controls">
-                            <div></div>
-                            <button onclick="move(0,-1)">⬆️</button>
-                            <div></div>
-                            <button onclick="move(-1,0)">⬅️</button>
-                            <button onclick="move(0,1)">⬇️</button>
-                            <button onclick="move(1,0)">➡️</button>
-                        </div>
+                    <!-- Touch controls -->
+                    <div class="controls">
+                        <div></div>
+                        <button onclick="move(0,-1)">⬆️</button>
+                        <div></div>
+                        <button onclick="move(-1,0)">⬅️</button>
+                        <button onclick="move(0,1)">⬇️</button>
+                        <button onclick="move(1,0)">➡️</button>
                     </div>
+                </div>
 
-                    <div class="feedback" id="feedbackBox">
-                        <span id="feedbackText">Ok tuşlarıyla veya butonlarla taşı hareket ettir. Zarf noktasına gelince
-                            soru açılır.</span>
-                        <span class="tag" id="feedbackTag">ATO</span>
+                <div class="feedback" id="feedbackBox">
+                    <span id="feedbackText">Ok tuşlarıyla veya butonlarla taşı hareket ettir. Zarf noktasına gelince
+                        soru açılır.</span>
+                    <span class="tag" id="feedbackTag">ATO</span>
+                </div>
+
+                <div class="mono">
+                    Kısayollar: <b>↑ ↓ ← →</b> hareket • <b>R</b> reset
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT -->
+        <aside class="panel">
+            <div class="right">
+                <div class="box">
+                    <b>Zarf İlerlemesi</b>
+                    <div class="nodes" id="nodes"></div>
+                    <div class="hint">
+                        Sıradaki zarf: <b id="nextLabel">1</b>. Sadece sıradaki zarf aktif.
                     </div>
+                </div>
 
+                <div class="box">
+                    <b>Oyun Kuralları (Rapor 2.6)</b>
+                    <div class="hint" style="display:grid; gap:8px;">
+                        <span>1. Her yol ayrımında yönlendirici zarflar bulunur.</span>
+                        <span>2. Doğru cevabın altındaki ok yönüne (açılan yola) hareket edilir.</span>
+                        <span>3. Yanlış cevapta çıkmaz sokağa girilir; geri dönüp soruya tekrar bakılmalıdır.</span>
+                        <span>4. Duvarların üstünden geçilemez.</span>
+                    </div>
                     <div class="mono">
-                        Kısayollar: <b>↑ ↓ ← →</b> hareket • <b>R</b> reset
+                        Labirent şekli <b>MAZE</b> dizisinden değiştirilebilir. Zarf noktaları <b>CHECKPOINTS</b> ile
+                        ayarlanır.
                     </div>
                 </div>
-            </section>
-
-            <!-- RIGHT -->
-            <aside class="panel">
-                <div class="right">
-                    <div class="box">
-                        <b>Zarf İlerlemesi</b>
-                        <div class="nodes" id="nodes"></div>
-                        <div class="hint">
-                            Sıradaki zarf: <b id="nextLabel">1</b>. Sadece sıradaki zarf aktif.
-                        </div>
-                    </div>
-
-                    <div class="box">
-                        <b>Oyun Kuralları (Rapor 2.6)</b>
-                        <div class="hint" style="display:grid; gap:8px;">
-                            <span>1. Her yol ayrımında yönlendirici zarflar bulunur.</span>
-                            <span>2. Doğru cevabın altındaki ok yönüne (açılan yola) hareket edilir.</span>
-                            <span>3. Yanlış cevapta çıkmaz sokağa girilir; geri dönüp soruya tekrar bakılmalıdır.</span>
-                            <span>4. Duvarların üstünden geçilemez.</span>
-                        </div>
-                        <div class="mono">
-                            Labirent şekli <b>MAZE</b> dizisinden değiştirilebilir. Zarf noktaları <b>CHECKPOINTS</b>
-                            ile
-                            ayarlanır.
-                        </div>
-                    </div>
-                </div>
-            </aside>
-        </div>
-    </div>
-
-    <!-- 3) END SCREEN -->
-    <div id="endScreen" class="screen">
-        <h1 class="heroTitle">Tebrikler! 🎉</h1>
-        <p class="heroText">
-            Labirenti başarıyla tamamladın ve tüm afet sorularını doğru cevapladın.
-            <br><br>
-            <i>"Afetlere karşı bilinçli olmak hayat kurtarır."</i>
-        </p>
-        <button class="bigBtn" onclick="resetGameApp()">TEKRAR OYNA</button>
+            </div>
+        </aside>
     </div>
 
     <!-- QUESTION MODAL -->
@@ -886,9 +800,8 @@
 
                 // If finished all
                 if (expectedCheckpoint > QUESTIONS.length) {
-                    // setFeedback("🎉 Çıkışa ulaştın!", "BİTİŞ");
-                    // expectedCheckpoint = QUESTIONS.length + 1;
-                    showScreen("endScreen");
+                    setFeedback("🎉 Çıkışa ulaştın!", "BİTİŞ");
+                    expectedCheckpoint = QUESTIONS.length + 1;
                 }
 
                 // close modal after short delay
@@ -934,31 +847,24 @@
             if (k === "arrowright") move(1, 0);
         });
 
-        // init - Start screen is active by default in HTML
-        function startGame() {
-            showScreen("gameScreen");
-            resetGame();
-        }
-
-        function resetGameApp() {
-            showScreen("startScreen");
-        }
-
-        function showScreen(id) {
-            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-            document.getElementById(id).classList.add("active");
-        }
+        // init
+        document.addEventListener("DOMContentLoaded", () => {
+            try {
+                resetGame();
+                setFeedback("✅ JS çalışıyor. Zarf 1'i bul.", "OK");
+            } catch (e) {
+                console.error(e);
+                // ekranda görünsün diye:
+                feedbackTextEl.textContent = "❌ JS error: " + (e?.message || e);
+                feedbackTagEl.textContent = "ERROR";
+            }
+        });
 
         // IMPORTANT: iOS/Safari için fonksiyonları global'e bağla
         window.move = move;
         window.resetGame = resetGame;
         window.answer = answer;
         window.closeModal = closeModal;
-        window.startGame = startGame;
-        window.resetGameApp = resetGameApp;
-
-        // Auto-resize canvas on startup (optional fix for blurriness, but keeping simple for now)
-    </script>
 
     </script>
 </body>
